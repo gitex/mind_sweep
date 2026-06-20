@@ -7,12 +7,13 @@
 
 #define FILENAME                  "steps.md"
 
-#define CONSOLE_DELIMITER_SIGN    '-'
-#define CONSOLE_DELIMITER_WIDTH   32
-#define CONSOLE_FIRST_LINE        1
+#define H_DELIMITER_SIGN          '-'
+#define H_DELIMITER_WIDTH         32
+#define FIRST_ROW                 1
 #define CONSOLE_HELP_LINE         1
-#define CONSOLE_OUTPUT_LINE       3
-#define CONSOLE_INPUT_LINE        5
+#define OUTPUT_ROW                3
+#define PROGRESS_ROW              5
+#define INPUT_ROW                 7
 
 #define OUTPUT_MAX_SIZE           256
 #define STEPS_MAX_SIZE            1024
@@ -160,6 +161,7 @@ int main(void) {
     size_t commands_size = sizeof(commands) / sizeof(*commands);
     Step *curr_step = NULL;
     char output[OUTPUT_MAX_SIZE];
+    int progress = 1;
 
     while(on) {
         move_to_row(CONSOLE_HELP_LINE);
@@ -169,27 +171,27 @@ int main(void) {
             printf(" - %s", commands[i][1]);
             if (i != commands_size - 1) { printf(", "); }
         }
-
-        draw_hline(2, CONSOLE_DELIMITER_WIDTH, CONSOLE_DELIMITER_SIGN);
-        draw_hline(4, CONSOLE_DELIMITER_WIDTH, CONSOLE_DELIMITER_SIGN);
-        move_to_row(CONSOLE_INPUT_LINE);
+        draw_hline(2, H_DELIMITER_WIDTH, H_DELIMITER_SIGN);
+        draw_hline(4, H_DELIMITER_WIDTH, H_DELIMITER_SIGN);
+        draw_hline(6, H_DELIMITER_WIDTH, H_DELIMITER_SIGN);
+        move_to_row(INPUT_ROW);
 
         char c = getchar();
 
         switch (c) {
             case 'q': on = 0; break;
             case 'n':
-                clear_row(CONSOLE_INPUT_LINE);
-                clear_row(CONSOLE_OUTPUT_LINE);
+                clear_row(INPUT_ROW);
+                clear_row(OUTPUT_ROW);
                 curr_step = find_next_step(steps, curr_step);
                 fill_output(output, curr_step);
-                print_at_row(CONSOLE_OUTPUT_LINE, output);
+                print_at_row(OUTPUT_ROW, output);
                 break;
         }
         fflush(stdout);
     }
     clear_screen();
-    move_to_row(CONSOLE_FIRST_LINE);
+    move_to_row(FIRST_ROW);
     free(steps);
     return 0;
 }
