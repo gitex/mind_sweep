@@ -4,16 +4,23 @@
 #include <locale.h>
 #include <ctype.h>
 
-#define ASCII_LINE_FEED 10
-#define ASCII_ASTERISK 42
 #define ASCII_SPACE 32
 #define STEPS_MAX_AMOUNT 1024
 #define FILENAME "steps.md"
 
+#define CONSOLE_CLEAR_CURR_LINE   "\033[2K"
+#define CONSOLE_CLEAR_ALL         "\033[2J"
 #define CONSOLE_COLOR_RED         "\033[31m"
 #define CONSOLE_COLOR_GREEN       "\033[32m"
 #define CONSOLE_COLOR_RESET       "\033[0m"
+
 #define CONSOLE_DELIMITER         '-'
+#define CONSOLE_DELIMITER_WIDTH   32
+#define CONSOLE_FIRST_LINE        1
+#define CONSOLE_HELP_LINE         1
+#define CONSOLE_OUTPUT_LINE       3
+#define CONSOLE_INPUT_LINE        5
+
 
 typedef struct Step {
     char name[64];
@@ -23,6 +30,52 @@ typedef struct Step {
     struct Step *prev;
     struct Step *next;
 } Step;
+
+Step *find_next_step(Step *steps, Step *curr_step) {
+    // TODO: add check for empty list
+    Step *curr = curr_step;
+
+    if (curr == NULL && steps != NULL) {
+        curr = &steps[0];
+    }
+
+    while(curr->next) {
+        if (curr->next->level == curr->level) {
+            return curr->next;
+        } else {
+            curr = curr->next;
+            continue;
+        }
+    }
+    return curr;
+}
+
+void clear_buffer(char *buff) {
+    for (int i = 0; i < sizeof(buff); i++) {
+        buff[i] = '\0';
+    }
+}
+
+void write_parents(char *buff, Step *step) {
+    if (step == NULL) {
+        return;
+    }
+
+    Step *curr = step;
+
+    while (curr->parent) {
+        strcat(buff, curr->parent->name);
+        strcat(buff, " > ");
+        curr = curr->parent;
+    }
+}
+
+void write_step(char *buff, Step *step) {
+    if (step == NULL) {
+        return;
+    }
+    strcat(buff, step->name);
+}
 
 void console_goto_line(int number) {
     // Go to line 1 -> \033[1;1H
@@ -34,24 +87,25 @@ void console_color_text(char *str, char *color) {
 }
 
 void console_clear(void) {
-    printf("\033[2J");
+    printf(CONSOLE_CLEAR_ALL);
 }
 
-void console_print_on_line(int number, char *str) {
+void console_print_at_line(int number, char *str) {
     console_goto_line(number);
-    printf(str);
+    printf("%s", str);
 }
 
 void console_clear_line(int number) {
     console_goto_line(number);
-    printf("\033[2K");   // Clear current line
+    printf(CONSOLE_CLEAR_CURR_LINE);
 }
 
-void console_divide_by_delimiter(int len) {
-    for (int i = 0; i < len; i++) {
+void console_put_delimiter_at_line(int line, int width) {
+    console_goto_line(line);
+    for (int i = 0; i < width; i++) {
         putchar(CONSOLE_DELIMITER);
     }
-
+    putchar('\n');
 }
 
 int main(void) {
@@ -100,7 +154,7 @@ int main(void) {
     int order[10] = {0};
     Step *prev = NULL;
     while(*start) {
-        end = strchr(start, ASCII_LINE_FEED);
+        end = strchr(start, '\n');
         if (end == NULL) {
             break;
         }
@@ -108,7 +162,7 @@ int main(void) {
 
         // trim
         while(*start) {
-            if (*start == ASCII_ASTERISK) {
+            if (*start == '*') {
                 curr -> level++;
                 start++;
             } else if (isspace(*start)) {
@@ -144,45 +198,53 @@ int main(void) {
     }
     free(buff);
 
-    char parents[256] = "";
-    int steps_size = idx;
-
-    // --- Console output ---
+    // --- TUI ---
     console_clear();
     int on = 1;
 
-    char *cmd[3][2] = {
+    char *commands[4][2] = {
         {"n", "next"},
         {"p", "previous"},
+        {"s", "skip"},
         {"q", "exit"},
     };
-    size_t cmd_size = sizeof(cmd) / sizeof(*cmd);
+    size_t commands_size = sizeof(commands) / sizeof(*commands);
+    Step *curr_step = NULL;
+    char output[64];
 
     while(on) {
-        console_goto_line(1);
-
-        for (int i = 0; i < cmd_size; i++) {
-            console_color_text(cmd[i][0], CONSOLE_COLOR_GREEN);
-            printf(" - %s", cmd[i][1]);
-            if (i != cmd_size - 1) { printf(", "); }
+        console_goto_line(CONSOLE_HELP_LINE);
+        printf("Help: ");
+        for (int i = 0; i < commands_size; i++) {
+            console_color_text(commands[i][0], CONSOLE_COLOR_GREEN);
+            printf(" - %s", commands[i][1]);
+            if (i != commands_size - 1) { printf(", "); }
         }
-        console_goto_line(2);
-        printf("-------\n");
-        console_goto_line(4);
-        printf("-------\n");
-        console_goto_line(5);
+
+        console_put_delimiter_at_line(2, CONSOLE_DELIMITER_WIDTH);
+        console_put_delimiter_at_line(4, CONSOLE_DELIMITER_WIDTH);
+        console_goto_line(CONSOLE_INPUT_LINE);
 
         char c = getchar();
+
         switch (c) {
             case 'q': on = 0; break;
             case 'n':
-                console_print_on_line(3, "next");
+                console_clear_line(CONSOLE_INPUT_LINE);
+                curr_step = find_next_step(steps, curr_step);
+                clear_buffer(output);
+                write_parents(output, curr_step);
+                write_step(output, curr_step);
+                console_print_at_line(CONSOLE_OUTPUT_LINE, output);
+                break;
+            case 's':
+                console_print_at_line(CONSOLE_OUTPUT_LINE, "skip");
                 break;
         }
         fflush(stdout);
     }
     console_clear();
-    console_goto_line(1);
+    console_goto_line(CONSOLE_FIRST_LINE);
     free(steps);
     return 0;
 }
