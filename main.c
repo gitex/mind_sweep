@@ -3,20 +3,11 @@
 #include <stdlib.h>
 #include <locale.h>
 #include <ctype.h>
+#include "console.h"
 
-#define ASCII_SPACE 32
-#define STEPS_MAX_AMOUNT 1024
-#define FILENAME "steps.md"
+#define FILENAME                  "steps.md"
 
-#define CONSOLE_CLEAR_CURR_LINE   "\033[2K"
-#define CONSOLE_CLEAR_ALL         "\033[2J"
-#define CONSOLE_COLOR_RED         "\033[31m"
-#define CONSOLE_COLOR_GREEN       "\033[32m"
-#define CONSOLE_COLOR_MAGENTA     "\033[35m"
-#define CONSOLE_COLOR_BLUE        "\033[34m"
-#define CONSOLE_COLOR_RESET       "\033[0m"
-
-#define CONSOLE_DELIMITER         '-'
+#define CONSOLE_DELIMITER_SIGN    '-'
 #define CONSOLE_DELIMITER_WIDTH   32
 #define CONSOLE_FIRST_LINE        1
 #define CONSOLE_HELP_LINE         1
@@ -24,6 +15,7 @@
 #define CONSOLE_INPUT_LINE        5
 
 #define OUTPUT_MAX_SIZE           256
+#define STEPS_MAX_SIZE            1024
 
 
 typedef struct Step {
@@ -69,41 +61,11 @@ void fill_output(char *buff, Step *step) {
         curr = curr->parent;
     }
 
-    strcat(buff, CONSOLE_COLOR_GREEN);
+    strcat(buff, ANSI_COLOR_GREEN);
     strcat(buff, step->name);
-    strcat(buff, CONSOLE_COLOR_RESET);
+    strcat(buff, ANSI_COLOR_RESET);
 }
 
-void console_goto_line(int number) {
-    // Go to line 1 -> \033[1;1H
-    printf("\033[%d;1H", number);
-}
-
-void console_color_text(char *str, char *color) {
-    printf("%s%s%s", color, str, CONSOLE_COLOR_RESET);
-}
-
-void console_clear(void) {
-    printf(CONSOLE_CLEAR_ALL);
-}
-
-void console_print_at_line(int number, char *str) {
-    console_goto_line(number);
-    printf("%s", str);
-}
-
-void console_clear_line(int number) {
-    console_goto_line(number);
-    printf(CONSOLE_CLEAR_CURR_LINE);
-}
-
-void console_put_delimiter_at_line(int line, int width) {
-    console_goto_line(line);
-    for (int i = 0; i < width; i++) {
-        putchar(CONSOLE_DELIMITER);
-    }
-    putchar('\n');
-}
 
 int main(void) {
     FILE *file = fopen(FILENAME, "r");
@@ -141,7 +103,7 @@ int main(void) {
     char *end;
     int line_n = 0;
 
-    Step *steps = (Step*)malloc(STEPS_MAX_AMOUNT * sizeof(Step));
+    Step *steps = (Step*)malloc(STEPS_MAX_SIZE * sizeof(Step));
     if (!steps) {
         printf("Cannot allocate the memory");
         free(buff);
@@ -196,7 +158,7 @@ int main(void) {
     free(buff);
 
     // --- TUI ---
-    console_clear();
+    clear_screen();
     int on = 1;
 
     char *commands[2][2] = {
@@ -210,34 +172,34 @@ int main(void) {
     char output[OUTPUT_MAX_SIZE];
 
     while(on) {
-        console_goto_line(CONSOLE_HELP_LINE);
+        move_to_row(CONSOLE_HELP_LINE);
         printf("Help: ");
         for (int i = 0; i < commands_size; i++) {
-            console_color_text(commands[i][0], CONSOLE_COLOR_RED);
+            print_colored(commands[i][0], ANSI_COLOR_GREEN);
             printf(" - %s", commands[i][1]);
             if (i != commands_size - 1) { printf(", "); }
         }
 
-        console_put_delimiter_at_line(2, CONSOLE_DELIMITER_WIDTH);
-        console_put_delimiter_at_line(4, CONSOLE_DELIMITER_WIDTH);
-        console_goto_line(CONSOLE_INPUT_LINE);
+        draw_hline(2, CONSOLE_DELIMITER_WIDTH, CONSOLE_DELIMITER_SIGN);
+        draw_hline(4, CONSOLE_DELIMITER_WIDTH, CONSOLE_DELIMITER_SIGN);
+        move_to_row(CONSOLE_INPUT_LINE);
 
         char c = getchar();
 
         switch (c) {
             case 'q': on = 0; break;
             case 'n':
-                console_clear_line(CONSOLE_INPUT_LINE);
-                console_clear_line(CONSOLE_OUTPUT_LINE);
+                clear_row(CONSOLE_INPUT_LINE);
+                clear_row(CONSOLE_OUTPUT_LINE);
                 curr_step = find_next_step(steps, curr_step);
                 fill_output(output, curr_step);
-                console_print_at_line(CONSOLE_OUTPUT_LINE, output);
+                print_at_row(CONSOLE_OUTPUT_LINE, output);
                 break;
         }
         fflush(stdout);
     }
-    console_clear();
-    console_goto_line(CONSOLE_FIRST_LINE);
+    clear_screen();
+    move_to_row(CONSOLE_FIRST_LINE);
     free(steps);
     return 0;
 }
