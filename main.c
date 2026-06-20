@@ -12,6 +12,8 @@
 #define CONSOLE_CLEAR_ALL         "\033[2J"
 #define CONSOLE_COLOR_RED         "\033[31m"
 #define CONSOLE_COLOR_GREEN       "\033[32m"
+#define CONSOLE_COLOR_MAGENTA     "\033[35m"
+#define CONSOLE_COLOR_BLUE        "\033[34m"
 #define CONSOLE_COLOR_RESET       "\033[0m"
 
 #define CONSOLE_DELIMITER         '-'
@@ -20,6 +22,8 @@
 #define CONSOLE_HELP_LINE         1
 #define CONSOLE_OUTPUT_LINE       3
 #define CONSOLE_INPUT_LINE        5
+
+#define OUTPUT_MAX_SIZE           256
 
 
 typedef struct Step {
@@ -50,16 +54,12 @@ Step *find_next_step(Step *steps, Step *curr_step) {
     return curr;
 }
 
-void clear_buffer(char *buff) {
-    for (int i = 0; i < sizeof(buff); i++) {
-        buff[i] = '\0';
-    }
-}
-
-void write_parents(char *buff, Step *step) {
+void fill_output(char *buff, Step *step) {
     if (step == NULL) {
         return;
     }
+
+    memset(buff, 0, sizeof(&buff));
 
     Step *curr = step;
 
@@ -68,13 +68,10 @@ void write_parents(char *buff, Step *step) {
         strcat(buff, " > ");
         curr = curr->parent;
     }
-}
 
-void write_step(char *buff, Step *step) {
-    if (step == NULL) {
-        return;
-    }
+    strcat(buff, CONSOLE_COLOR_GREEN);
     strcat(buff, step->name);
+    strcat(buff, CONSOLE_COLOR_RESET);
 }
 
 void console_goto_line(int number) {
@@ -202,21 +199,21 @@ int main(void) {
     console_clear();
     int on = 1;
 
-    char *commands[4][2] = {
+    char *commands[2][2] = {
         {"n", "next"},
-        {"p", "previous"},
-        {"s", "skip"},
+        // {"p", "previous"},
+        // {"s", "skip"},
         {"q", "exit"},
     };
     size_t commands_size = sizeof(commands) / sizeof(*commands);
     Step *curr_step = NULL;
-    char output[64];
+    char output[OUTPUT_MAX_SIZE];
 
     while(on) {
         console_goto_line(CONSOLE_HELP_LINE);
         printf("Help: ");
         for (int i = 0; i < commands_size; i++) {
-            console_color_text(commands[i][0], CONSOLE_COLOR_GREEN);
+            console_color_text(commands[i][0], CONSOLE_COLOR_RED);
             printf(" - %s", commands[i][1]);
             if (i != commands_size - 1) { printf(", "); }
         }
@@ -231,14 +228,10 @@ int main(void) {
             case 'q': on = 0; break;
             case 'n':
                 console_clear_line(CONSOLE_INPUT_LINE);
+                console_clear_line(CONSOLE_OUTPUT_LINE);
                 curr_step = find_next_step(steps, curr_step);
-                clear_buffer(output);
-                write_parents(output, curr_step);
-                write_step(output, curr_step);
+                fill_output(output, curr_step);
                 console_print_at_line(CONSOLE_OUTPUT_LINE, output);
-                break;
-            case 's':
-                console_print_at_line(CONSOLE_OUTPUT_LINE, "skip");
                 break;
         }
         fflush(stdout);

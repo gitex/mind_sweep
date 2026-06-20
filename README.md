@@ -26,3 +26,4 @@ make
 ## Ссылки
 
 - [Список Максима Дорофеева](https://gist.github.com/svetlyak40wt/6c79264d9c3615e1a168ed774fbc7335)
+- [ANSI Escape Code](https://en.wikipedia.org/wiki/ANSI_escape_code)
