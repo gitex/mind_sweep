@@ -21,7 +21,6 @@
 typedef struct Step {
     char name[64];
     int level;
-    int order;
     struct Step *parent;
     struct Step *prev;
     struct Step *next;
@@ -132,13 +131,6 @@ int main(void) {
         int len = end - start;
         snprintf(curr->name, sizeof(curr->name), "%.*s", len, start);
 
-        // set order
-        order[curr->level]++;
-        if (prev && prev->level < curr->level) {
-            order[curr->level] = 0;
-        }
-        curr->order = order[curr->level];
-
         // parent
         if (prev && prev->level == curr->level) {
             curr->parent = prev->parent;
@@ -163,8 +155,6 @@ int main(void) {
 
     char *commands[2][2] = {
         {"n", "next"},
-        // {"p", "previous"},
-        // {"s", "skip"},
         {"q", "exit"},
     };
     size_t commands_size = sizeof(commands) / sizeof(*commands);
