@@ -22,3 +22,7 @@
 make
 ./main
 ```
+
+## Ссылки
+
+- [Список Максима Дорофеева](https://gist.github.com/svetlyak40wt/6c79264d9c3615e1a168ed774fbc7335)

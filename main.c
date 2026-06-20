@@ -10,6 +10,11 @@
 #define STEPS_MAX_AMOUNT 1024
 #define FILENAME "steps.md"
 
+#define CONSOLE_COLOR_RED         "\033[31m"
+#define CONSOLE_COLOR_GREEN       "\033[32m"
+#define CONSOLE_COLOR_RESET       "\033[0m"
+#define CONSOLE_DELIMITER         '-'
+
 typedef struct Step {
     char name[64];
     int level;
@@ -19,10 +24,37 @@ typedef struct Step {
     struct Step *next;
 } Step;
 
+void console_goto_line(int number) {
+    // Go to line 1 -> \033[1;1H
+    printf("\033[%d;1H", number);
+}
+
+void console_color_text(char *str, char *color) {
+    printf("%s%s%s", color, str, CONSOLE_COLOR_RESET);
+}
+
+void console_clear(void) {
+    printf("\033[2J");
+}
+
+void console_print_on_line(int number, char *str) {
+    console_goto_line(number);
+    printf(str);
+}
+
+void console_clear_line(int number) {
+    console_goto_line(number);
+    printf("\033[2K");   // Clear current line
+}
+
+void console_divide_by_delimiter(int len) {
+    for (int i = 0; i < len; i++) {
+        putchar(CONSOLE_DELIMITER);
+    }
+
+}
 
 int main(void) {
-    // setlocale(LC_ALL, "ru_RU.UTF-8");
-
     FILE *file = fopen(FILENAME, "r");
     if (file == NULL) {
         printf("Cannot find a file %s", FILENAME);
@@ -87,11 +119,6 @@ int main(void) {
         int len = end - start;
         snprintf(curr->name, sizeof(curr->name), "%.*s", len, start);
 
-        // if (idx > 0 && steps[idx - 1].level < curr->level) {
-        //     printf("%s -> %s\n", steps[idx - 1].name, curr->name);
-        //     // curr->parent = steps[idx - 1];
-        // }
-
         // set order
         order[curr->level]++;
         if (prev && prev->level < curr->level) {
@@ -120,21 +147,42 @@ int main(void) {
     char parents[256] = "";
     int steps_size = idx;
 
-    for (size_t i = 0; i < steps_size; i++) {
-        Step step = steps[i];
-        // printf("%s -> %s\n", step.name, step.next->name);
+    // --- Console output ---
+    console_clear();
+    int on = 1;
 
-        if (step.next && step.next->parent == &step) {
-            if (strlen(parents) > 0) {
-                strcat(parents, " -> ");
-            }
-            strcat(parents, step.name);
+    char *cmd[3][2] = {
+        {"n", "next"},
+        {"p", "previous"},
+        {"q", "exit"},
+    };
+    size_t cmd_size = sizeof(cmd) / sizeof(*cmd);
+
+    while(on) {
+        console_goto_line(1);
+
+        for (int i = 0; i < cmd_size; i++) {
+            console_color_text(cmd[i][0], CONSOLE_COLOR_GREEN);
+            printf(" - %s", cmd[i][1]);
+            if (i != cmd_size - 1) { printf(", "); }
         }
+        console_goto_line(2);
+        printf("-------\n");
+        console_goto_line(4);
+        printf("-------\n");
+        console_goto_line(5);
 
-        printf("%s", parents);
+        char c = getchar();
+        switch (c) {
+            case 'q': on = 0; break;
+            case 'n':
+                console_print_on_line(3, "next");
+                break;
+        }
+        fflush(stdout);
     }
-
-
+    console_clear();
+    console_goto_line(1);
     free(steps);
     return 0;
 }
