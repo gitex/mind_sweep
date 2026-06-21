@@ -29,10 +29,12 @@ typedef struct Step {
     struct Step *next;
 } Step;
 
+
 typedef struct Buffer {
     char *data;
     size_t size;
 } Buffer;
+
 
 Step *find_next_step(Step *steps, Step *curr_step) {
     // TODO: add check for empty list
@@ -217,9 +219,6 @@ int main(void) {
         clear_buffer(&progress_buff);
         write_progress(&progress_buff, progress_current, triggers_total);
         print_at_row(PROGRESS_ROW, progress_buff.data);
-
-        // draw_hline(4, H_DELIMITER_WIDTH, H_DELIMITER_SIGN);
-        // draw_hline(6, H_DELIMITER_WIDTH, H_DELIMITER_SIGN);
         move_to_row(INPUT_ROW);
 
         char c = getchar();

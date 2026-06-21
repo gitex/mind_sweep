@@ -8,6 +8,9 @@ exe: main.c console.c console.h
 debug: main.c console.c console.h
 	$(CC) -g -O0 -Wall -Wextra main.c console.c -o main
 
+clear:
+	-rm main 2>/dev/null
+
 gdb: main.c debug
 	gdb ./main
 

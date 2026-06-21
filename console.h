@@ -1,6 +1,7 @@
 #ifndef CONSOLE
 #define CONSOLE
 
+#define ANSI_UPPER_LEFT_CORNER    "\033[H"
 #define ANSI_CLEAR_CURRENT_ROW    "\033[2K"
 #define ANSI_CLEAR_SCREEN         "\033[2J"
 #define ANSI_COLOR_RED            "\033[31m"

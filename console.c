@@ -1,14 +1,5 @@
 #include <stdio.h>
-
-#define CONSOLE_CLEAR_CURR_LINE   "\033[2K"
-#define CONSOLE_CLEAR_ALL         "\033[2J"
-#define CONSOLE_COLOR_RED         "\033[31m"
-#define CONSOLE_COLOR_GREEN       "\033[32m"
-#define CONSOLE_COLOR_MAGENTA     "\033[35m"
-#define CONSOLE_COLOR_BLUE        "\033[34m"
-#define CONSOLE_COLOR_RESET       "\033[0m"
-
-#define CONSOLE_FIRST_COLUMN      1
+#include "console.h"
 
 
 void move_to(int row, int col) {
@@ -16,15 +7,15 @@ void move_to(int row, int col) {
 }
 
 void move_to_row(int row) {
-    move_to(row, CONSOLE_FIRST_COLUMN);
+    move_to(row, 1);
 }
 
 void print_colored(char *text, char *color) {
-    printf("%s%s%s", color, text, CONSOLE_COLOR_RESET);
+    printf("%s%s%s", color, text, ANSI_COLOR_RESET);
 }
 
 void clear_screen(void) {
-    printf(CONSOLE_CLEAR_ALL);
+    printf(ANSI_CLEAR_SCREEN);
 }
 
 void print_at_row(int row, char *text) {
@@ -34,11 +25,11 @@ void print_at_row(int row, char *text) {
 
 void clear_row(int row) {
     move_to_row(row);
-    printf(CONSOLE_CLEAR_CURR_LINE);
+    printf(ANSI_CLEAR_CURRENT_ROW);
 }
 
 void draw_hline(int row, int width, char ch) {
-    move_to(row, CONSOLE_FIRST_COLUMN);
+    move_to_row(row);
     for (int i = 0; i < width; i++) {
         putchar(ch);
     }
