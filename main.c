@@ -89,22 +89,26 @@ void write_progress(Buffer *buff, int current, int total) {
     strcat(buff->data, temp);
 }
 
-void write_step(Buffer *buff, Step *step) {
+void write_step(Buffer *buf, Step *step) {
     if (step == NULL) {
         return;
     }
 
     Step *curr = step;
 
+    char tmp[128] = {0};
+    char suffix[128] = {0};
     while (curr->parent) {
-        strcat(buff->data, curr->parent->name);
-        strcat(buff->data, " > ");
+        snprintf(tmp, sizeof(tmp), "%s > ", curr->parent->name);
+        strcat(tmp, suffix);
+        strcpy(suffix, tmp);
         curr = curr->parent;
     }
+    strcat(buf->data, suffix);
 
-    strcat(buff->data, ANSI_COLOR_GREEN);
-    strcat(buff->data, step->name);
-    strcat(buff->data, ANSI_COLOR_RESET);
+    strcat(buf->data, ANSI_COLOR_GREEN);
+    strcat(buf->data, step->name);
+    strcat(buf->data, ANSI_COLOR_RESET);
 }
 
 
@@ -148,6 +152,11 @@ int main(int argc, char *argv[]) {
             break;
         }
         Step *curr = &steps[idx];
+
+        if (*start != '*') {
+            start = end + 1;
+            continue;
+        }
 
         // left trim
         while(*start) {
