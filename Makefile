@@ -1,19 +1,22 @@
 build: exe
 
 CC = cc
+C_FILES = console.c file.c tree.c main.c
+H_FILES = console.h file.h tree.h
+OUT_FILE = main
 
-exe: main.c console.c console.h
-	$(CC) main.c console.c -o main
+exe: $(C_FILES) $(H_FILES)
+	$(CC) $(C_FILES) -o $(OUT_FILE)
 
-debug: main.c console.c console.h
-	$(CC) -g -O0 -Wall -Wextra main.c console.c -o main
+debug: $(C_FILES) $(H_FILES)
+	$(CC) -g -O0 -Wall -Wextra $(C_FILES) -o $(OUT_FILE)
 
 clear:
-	-rm main 2>/dev/null
+	-rm $(OUT_FILE) 2>/dev/null
 
 gdb: main.c debug
-	gdb ./main
+	gdb ./$(OUT_FILE)
 
 valgrind: main.c debug
-	valgrind --leak-check=full ./main
+	valgrind --leak-check=full ./$(OUT_FILE)
 

@@ -5,6 +5,8 @@
 #include <ctype.h>
 #include <stdbool.h>
 #include "console.h"
+#include "file.h"
+#include "tree.h"
 
 #define FILENAME                  "steps.md"
 
@@ -18,14 +20,22 @@
 
 #define OUTPUT_MAX_SIZE           256
 #define STEPS_MAX_SIZE            1024
+#define LEVEL_MAX                 20
+
+
+typedef enum {
+    MS_OK = 0,
+    MS_ERR_INPUT = -1,
+    MS_ERR_FILE_NOT_FOUND = -2,
+    MS_ERR_FILE_EMPTY = -3,
+} output_t;
 
 
 typedef struct Step {
     char name[64];
     int level;
-    bool is_trigger;
+    bool is_leaf;
     struct Step *parent;
-    struct Step *prev;
     struct Step *next;
 } Step;
 
@@ -36,21 +46,24 @@ typedef struct Buffer {
 } Buffer;
 
 
-Step *find_next_step(Step *steps, Step *curr_step) {
-    // TODO: add check for empty list
-    Step *curr = curr_step;
+Step *find_next_step(Step *steps, Step *current) {
+    if (!steps) return NULL;
 
-    if (curr == NULL && steps != NULL) {
+    Step *curr = current;
+
+    if (curr == NULL) {
         curr = &steps[0];
     }
 
+    if (!curr->next) {
+        return NULL;
+    }
+
     while(curr->next) {
-        if (curr->next->level == curr->level) {
+        if (curr->next->is_leaf) {
             return curr->next;
-        } else {
-            curr = curr->next;
-            continue;
         }
+        curr = curr->next;
     }
     return curr;
 }
@@ -96,52 +109,40 @@ void write_step(Buffer *buff, Step *step) {
 }
 
 
-int main(void) {
-    FILE *file = fopen(FILENAME, "r");
-    if (file == NULL) {
-        printf("Cannot find a file %s", FILENAME);
-        return 1;
+int main(int argc, char *argv[]) {
+    if (argc != 2) {
+        printf("Usage: ./main <md_file>\n");
+        return MS_ERR_INPUT;
     }
+    char *filepath = argv[1];
 
-    fseek(file, 0, SEEK_END);
-    long size = ftell(file);
-    rewind(file);
-    if (size == 0) {
-        printf("File is empty");
-        return 1;
+    FILE *file = file_open(filepath, "r");
+    if (!file) {
+        perror("Cannot open file\n");
+        return MS_ERR_FILE_NOT_FOUND;
     }
-
-    char *buff = (char*)malloc(size + 1);
-    if (!buff) {
-        printf("Cannot allocate memory");
-        fclose(file);
-        return 1;
+    char *file_content = file_read_into_memory(file);
+    if (!file_content) {
+        perror("Cannot load file into memory\n");
+        return MS_ERR_FILE_NOT_FOUND;
     }
-
-    size_t bytes_read = fread(buff, 1, size, file);
-    if (bytes_read != size) {
-        printf("Cannot read a file");
-        free(buff);
-        fclose(file);
-        return 1;
-    }
-
     fclose(file);
 
-    char *start = buff;
-    char *end;
-    int line_n = 0;
-
+    // read file content
     Step *steps = (Step*)malloc(STEPS_MAX_SIZE * sizeof(Step));
     if (!steps) {
         printf("Cannot allocate the memory");
-        free(buff);
+        free(file_content);
+        return -1;
     }
 
     int idx = 0;
-    int order[10] = {0};
     Step *prev = NULL;
-    int triggers_total = 0;
+    int leafs_count = 0;
+    Step *parents_cache[LEVEL_MAX + 1] = {NULL};
+
+    char *start = file_content;
+    char *end;
     while(*start) {
         end = strchr(start, '\n');
         if (end == NULL) {
@@ -149,6 +150,7 @@ int main(void) {
         }
         Step *curr = &steps[idx];
 
+        // left trim
         while(*start) {
             if (*start == '*') {
                 curr -> level++;
@@ -158,33 +160,41 @@ int main(void) {
             } else { break; }
         }
 
+        // name
         int len = end - start;
         snprintf(curr->name, sizeof(curr->name), "%.*s", len, start);
 
         // parent
-        if (prev && prev->level == curr->level) {
-            curr->parent = prev->parent;
-        } else if (prev && prev->level < curr->level) {
-            curr->parent = prev;
-        }
+        // if (prev && prev->level == curr->level) {
+        //     curr->parent = prev->parent;
+        // } else if (prev && prev->level < curr->level) {
+        //     curr->parent = prev;
+        // }
+        curr->parent = parents_cache[curr->level - 1];
 
-        // next and previous
         if (prev) {
+            // next and previous
             prev->next = curr;
-            curr->prev = prev;
-        }
 
-        // is_trigger (prev)
-        if (prev  && prev->next->level >= prev->level) {
-            prev->is_trigger = true;
-            triggers_total++;
+            // is_leaf
+            if (prev->level >= curr->level) {
+                prev->is_leaf = true;
+                leafs_count++;
+            }
+
+            if (*(end + 1) == '\0') {
+                curr->is_leaf = true;
+                leafs_count++;
+            }
         }
 
         start = end + 1;
         idx++;
         prev = curr;
+        parents_cache[curr->level] = curr;
     }
-    free(buff);
+
+    free(file_content);
 
     // --- TUI ---
     clear_screen();
@@ -195,7 +205,8 @@ int main(void) {
         {"q", "exit"},
     };
     size_t commands_size = sizeof(commands) / sizeof(*commands);
-    Step *curr_step = NULL;
+    Step *current = NULL;
+    bool is_completed = false;
     int progress_current = 0;
     Buffer progress_buff = {
         .data = (char[128]){0},
@@ -213,11 +224,11 @@ int main(void) {
         for (int i = 0; i < commands_size; i++) {
             print_colored(commands[i][0], ANSI_COLOR_RED);
             printf(" - %s", commands[i][1]);
-            if (i != commands_size - 1) { printf(", "); }
+            if ((size_t)i != commands_size - 1) { printf(", "); }
         }
 
         clear_buffer(&progress_buff);
-        write_progress(&progress_buff, progress_current, triggers_total);
+        write_progress(&progress_buff, progress_current, leafs_count);
         print_at_row(PROGRESS_ROW, progress_buff.data);
         move_to_row(INPUT_ROW);
 
@@ -226,11 +237,16 @@ int main(void) {
         switch (c) {
             case 'q': quit = 1; break;
             case 'n':
+                if (is_completed) break;
                 clear_row(INPUT_ROW);
                 clear_row(OUTPUT_ROW);
-                curr_step = find_next_step(steps, curr_step);
+                current = find_next_step(steps, current);
+                if (!current) {
+                    is_completed = true;
+                    break;
+                }
                 clear_buffer(&output_buff);
-                write_step(&output_buff, curr_step);
+                write_step(&output_buff, current);
                 print_at_row(OUTPUT_ROW, output_buff.data);
                 progress_current++;
                 break;
