@@ -6,7 +6,6 @@
 #include <stdbool.h>
 #include "console.h"
 #include "file.h"
-#include "tree.h"
 
 #define FILENAME                  "steps.md"
 

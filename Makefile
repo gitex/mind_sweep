@@ -1,8 +1,8 @@
 build: exe
 
 CC = cc
-C_FILES = console.c file.c tree.c main.c
-H_FILES = console.h file.h tree.h
+C_FILES = console.c file.c main.c
+H_FILES = console.h file.h
 OUT_FILE = main
 
 exe: $(C_FILES) $(H_FILES)
