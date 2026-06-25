@@ -20,6 +20,7 @@
 #define OUTPUT_MAX_SIZE           256
 #define STEPS_MAX_SIZE            1024
 #define LEVEL_MAX                 20
+#define LEVEL_SIGN                '#'
 
 
 typedef enum {
@@ -52,6 +53,9 @@ Step *find_next_step(Step *steps, Step *current) {
 
     if (curr == NULL) {
         curr = &steps[0];
+
+        if (curr->is_leaf)
+            return curr;
     }
 
     if (!curr->next) {
@@ -64,6 +68,8 @@ Step *find_next_step(Step *steps, Step *current) {
         }
         curr = curr->next;
     }
+
+    // last
     return curr;
 }
 
@@ -153,14 +159,14 @@ int main(int argc, char *argv[]) {
         }
         Step *curr = &steps[idx];
 
-        if (*start != '*') {
+        if (*start != LEVEL_SIGN) {
             start = end + 1;
             continue;
         }
 
         // left trim
         while(*start) {
-            if (*start == '*') {
+            if (*start == LEVEL_SIGN) {
                 curr -> level++;
                 start++;
             } else if (isspace(*start)) {
@@ -172,12 +178,6 @@ int main(int argc, char *argv[]) {
         int len = end - start;
         snprintf(curr->name, sizeof(curr->name), "%.*s", len, start);
 
-        // parent
-        // if (prev && prev->level == curr->level) {
-        //     curr->parent = prev->parent;
-        // } else if (prev && prev->level < curr->level) {
-        //     curr->parent = prev;
-        // }
         curr->parent = parents_cache[curr->level - 1];
 
         if (prev) {
@@ -189,11 +189,6 @@ int main(int argc, char *argv[]) {
                 prev->is_leaf = true;
                 leafs_count++;
             }
-
-            if (*(end + 1) == '\0') {
-                curr->is_leaf = true;
-                leafs_count++;
-            }
         }
 
         start = end + 1;
@@ -201,6 +196,10 @@ int main(int argc, char *argv[]) {
         prev = curr;
         parents_cache[curr->level] = curr;
     }
+
+    // last step is always leaf
+    prev->is_leaf = true;
+    leafs_count++;
 
     free(file_content);
 
