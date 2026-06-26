@@ -21,7 +21,26 @@
 "машина - документы" вы сразу вспоминаете, что скоро истекает
 страховка на машину.
 
-## Сборка
+## Билд
+
+Билд требует `gcc` и `make` (`make` не обязателен, для удобства):
+```bash
+gcc --version
+make --version
+```
+Если чего-то нет - установите:
+
+```bash
+# Ubuntu / Debian
+sudo apt install gcc make
+
+# Fedora / RHEL
+sudo dnf install gcc make
+
+# Arch
+sudo pacman -S gcc make
+```
+Билд:
 
 ```bash
 make
