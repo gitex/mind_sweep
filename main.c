@@ -8,7 +8,6 @@
 #include "file.h"
 #include "buffer.h"
 
-#define FILENAME                  "steps.md"
 
 #define H_DELIMITER_SIGN          '-'
 #define H_DELIMITER_WIDTH         64
@@ -69,23 +68,20 @@ Step *find_next_step(Step *steps, Step *current) {
     return NULL;
 }
 
-void write_progress(Buffer *buff, int current, int total) {
+void write_progress(Buffer *buf, int current, int total) {
     int persent = current * 100 / total;
 
-
-    strcat(buff->data, "progress: [");
+    buf_append(buf, "progress: [");
 
     for (int i = 0; i < persent / 2; i++) {
-        strcat(buff->data, "#");
+        buf_append(buf, "#");
     }
 
     for (int i = 0; i < 50 - persent / 2; i++) {
-        strcat(buff->data, ".");
+        buf_append(buf, ".");
     }
 
-    char temp[64];
-    snprintf(temp, sizeof(temp), "] %d/%d", current, total);
-    strcat(buff->data, temp);
+    buf_append(buf, "] %d/%d", current, total);
 }
 
 void write_step(Buffer *buf, Step *step) {
@@ -103,29 +99,26 @@ void write_step(Buffer *buf, Step *step) {
         strcpy(suffix, tmp);
         curr = curr->parent;
     }
-    strcat(buf->data, suffix);
-
-    strcat(buf->data, ANSI_COLOR_GREEN);
-    strcat(buf->data, step->name);
-    strcat(buf->data, ANSI_COLOR_RESET);
+    buf_append(buf, suffix);
+    buf_append(buf, "%s%s%s", ANSI_COLOR_GREEN, step->name, ANSI_COLOR_RESET);
 }
 
 
 int main(int argc, char *argv[]) {
     if (argc != 2) {
-        printf("Usage: ./main <md_file>\n");
+        fprintf(stderr, "Usage: ./main <md_file>\n");
         return MS_ERR_INPUT;
     }
     char *filepath = argv[1];
 
     FILE *file = file_open(filepath, "r");
     if (!file) {
-        perror("Cannot open file\n");
+        fprintf(stderr, "Cannot open file\n");
         return MS_ERR_FILE_NOT_FOUND;
     }
     char *file_content = file_read_into_memory(file);
     if (!file_content) {
-        perror("Cannot load file into memory\n");
+        fprintf(stderr, "Cannot load file into memory\n");
         free(file_content);
         return MS_ERR_FILE_NOT_FOUND;
     }
@@ -134,7 +127,7 @@ int main(int argc, char *argv[]) {
     // read file content
     Step *steps = (Step*)calloc(STEPS_MAX_SIZE, sizeof(Step));
     if (!steps) {
-        printf("Cannot allocate the memory");
+        fprintf(stderr, "Cannot allocate the memory\n");
         free(file_content);
         return MS_ERR_ALLOCATION;
     }

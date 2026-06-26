@@ -29,7 +29,6 @@ int file_size(FILE *file) {
     return size;
 }
 
-
 char *file_read_into_memory(FILE *file) {
     int size = file_size(file);
 
