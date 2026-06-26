@@ -13,9 +13,9 @@
 #define H_DELIMITER_WIDTH         64
 #define FIRST_ROW                 1
 #define CONSOLE_HELP_LINE         1
-#define OUTPUT_ROW                5
-#define PROGRESS_ROW              2
-#define INPUT_ROW                 7
+#define PROGRESS_ROW              3
+#define OUTPUT_ROW                7
+#define INPUT_ROW                 9
 
 #define OUTPUT_MAX_SIZE           256
 #define STEPS_MAX_SIZE            1024
@@ -206,8 +206,9 @@ int main(int argc, char *argv[]) {
     clear_screen();
     int quit = 0;
 
-    char *commands[2][2] = {
+    char *commands[3][2] = {
         {"n", "next"},
+        {"r", "restart"},
         {"q", "exit"},
     };
     size_t commands_size = sizeof(commands) / sizeof(*commands);
@@ -218,8 +219,7 @@ int main(int argc, char *argv[]) {
     Buffer output_buf = buf_new(OUTPUT_MAX_SIZE);
 
     while(!quit) {
-        move_to_row(CONSOLE_HELP_LINE);
-        printf("help: ");
+        print_at_row(CONSOLE_HELP_LINE, "help: ");
         for (int i = 0; i < commands_size; i++) {
             print_colored(commands[i][0], ANSI_COLOR_RED);
             printf(" - %s", commands[i][1]);
@@ -250,6 +250,13 @@ int main(int argc, char *argv[]) {
                 print_at_row(OUTPUT_ROW, output_buf.data);
                 progress_current++;
                 break;
+            case 'r':
+                is_completed = false;
+                current = NULL;
+                progress_current = 0;
+                clear_row(INPUT_ROW);
+                clear_row(OUTPUT_ROW);
+                clear_row(PROGRESS_ROW);
         }
         fflush(stdout);
     }

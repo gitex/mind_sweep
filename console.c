@@ -20,7 +20,7 @@ void clear_screen(void) {
 
 void print_at_row(int row, const char *text) {
     move_to_row(row);
-    printf("%s", text);
+    printf(" %s", text);
 }
 
 void clear_row(int row) {
