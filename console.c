@@ -35,3 +35,4 @@ void draw_hline(int row, int width, char ch) {
     }
     putchar('\n');
 }
+

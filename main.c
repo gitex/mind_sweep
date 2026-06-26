@@ -6,6 +6,7 @@
 #include <stdbool.h>
 #include "console.h"
 #include "file.h"
+#include "buffer.h"
 
 #define FILENAME                  "steps.md"
 
@@ -40,12 +41,6 @@ typedef struct Step {
 } Step;
 
 
-typedef struct Buffer {
-    char *data;
-    size_t size;
-} Buffer;
-
-
 Step *find_next_step(Step *steps, Step *current) {
     if (!steps) return NULL;
 
@@ -69,16 +64,12 @@ Step *find_next_step(Step *steps, Step *current) {
         curr = curr->next;
     }
 
-    // last
-    return curr;
-}
-
-void clear_buffer(Buffer *buff) {
-    memset(buff->data, 0, buff->size);
+    return NULL;
 }
 
 void write_progress(Buffer *buff, int current, int total) {
     int persent = current * 100 / total;
+
 
     strcat(buff->data, "progress: [");
 
@@ -133,6 +124,7 @@ int main(int argc, char *argv[]) {
     char *file_content = file_read_into_memory(file);
     if (!file_content) {
         perror("Cannot load file into memory\n");
+        free(file_content);
         return MS_ERR_FILE_NOT_FOUND;
     }
     fclose(file);
@@ -215,15 +207,8 @@ int main(int argc, char *argv[]) {
     Step *current = NULL;
     bool is_completed = false;
     int progress_current = 0;
-    Buffer progress_buff = {
-        .data = (char[128]){0},
-        .size = 128
-    };
-
-    Buffer output_buff = {
-        .data = (char[OUTPUT_MAX_SIZE]){0},
-        .size = OUTPUT_MAX_SIZE
-    };
+    Buffer progress_buf = buf_new(128);
+    Buffer output_buf = buf_new(OUTPUT_MAX_SIZE);
 
     while(!quit) {
         move_to_row(CONSOLE_HELP_LINE);
@@ -234,9 +219,9 @@ int main(int argc, char *argv[]) {
             if ((size_t)i != commands_size - 1) { printf(", "); }
         }
 
-        clear_buffer(&progress_buff);
-        write_progress(&progress_buff, progress_current, leafs_count);
-        print_at_row(PROGRESS_ROW, progress_buff.data);
+        buf_clean(&progress_buf);
+        write_progress(&progress_buf, progress_current, leafs_count);
+        print_at_row(PROGRESS_ROW, progress_buf.data);
         move_to_row(INPUT_ROW);
 
         char c = getchar();
@@ -252,9 +237,9 @@ int main(int argc, char *argv[]) {
                     is_completed = true;
                     break;
                 }
-                clear_buffer(&output_buff);
-                write_step(&output_buff, current);
-                print_at_row(OUTPUT_ROW, output_buff.data);
+                buf_clean(&output_buf);
+                write_step(&output_buf, current);
+                print_at_row(OUTPUT_ROW, output_buf.data);
                 progress_current++;
                 break;
         }

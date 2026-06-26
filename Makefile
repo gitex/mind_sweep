@@ -1,17 +1,20 @@
 build: exe
 
+.PHONY: build exe debug clean gdb valgrind
+
 CC = cc
-C_FILES = console.c file.c main.c
-H_FILES = console.h file.h
+CFILES = console.c file.c buffer.c main.c
+HFILES = console.h file.h buffer.h
 OUT_FILE = main
+CFLAGS = -Wall -Wextra -Wpedantic
 
-exe: $(C_FILES) $(H_FILES)
-	$(CC) $(C_FILES) -o $(OUT_FILE)
+exe: $(CFILES) $(HFILES)
+	$(CC) $(CFLAGS) $(CFILES) -o $(OUT_FILE)
 
-debug: $(C_FILES) $(H_FILES)
-	$(CC) -g -O0 -Wall -Wextra $(C_FILES) -o $(OUT_FILE)
+debug: $(CFILES) $(HFILES)
+	$(CC) -g -O0 $(CFLAGS) $(CFILES) -o $(OUT_FILE)
 
-clear:
+clean:
 	-rm $(OUT_FILE) 2>/dev/null
 
 gdb: main.c debug
