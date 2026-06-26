@@ -10,7 +10,7 @@ void move_to_row(int row) {
     move_to(row, 1);
 }
 
-void print_colored(char *text, char *color) {
+void print_colored(const char *text, const char *color) {
     printf("%s%s%s", color, text, ANSI_COLOR_RESET);
 }
 
@@ -18,7 +18,7 @@ void clear_screen(void) {
     printf(ANSI_CLEAR_SCREEN);
 }
 
-void print_at_row(int row, char *text) {
+void print_at_row(int row, const char *text) {
     move_to_row(row);
     printf("%s", text);
 }

@@ -1,5 +1,5 @@
-#ifndef BUFFER
-#define BUFFER
+#ifndef _BUFFER
+#define _BUFFER
 
 #include <stddef.h>
 
@@ -15,5 +15,4 @@ size_t buf_left(Buffer *buf);
 bool buf_append(Buffer *buf, const char *format, ...);
 void buf_clean(Buffer *buf);
 
-
-#endif // !__BUFFER__
+#endif

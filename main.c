@@ -30,6 +30,7 @@ typedef enum {
     MS_ERR_FILE_EMPTY = -3,
     MS_ERR_NO_STEPS = -4,
     MS_ERR_ALLOCATION = -5,
+    MS_ERR_STEPS_LIMIT = -6,
 } output_t;
 
 
@@ -69,15 +70,15 @@ Step *find_next_step(Step *steps, Step *current) {
 }
 
 void write_progress(Buffer *buf, int current, int total) {
-    int persent = current * 100 / total;
+    int percent = current * 100 / total;
 
     buf_append(buf, "progress: [");
 
-    for (int i = 0; i < persent / 2; i++) {
+    for (int i = 0; i < percent / 2; i++) {
         buf_append(buf, "#");
     }
 
-    for (int i = 0; i < 50 - persent / 2; i++) {
+    for (int i = 0; i < 50 - percent / 2; i++) {
         buf_append(buf, ".");
     }
 
@@ -119,6 +120,7 @@ int main(int argc, char *argv[]) {
     char *file_content = file_read_into_memory(file);
     if (!file_content) {
         fprintf(stderr, "Cannot load file into memory\n");
+        fclose(file);
         free(file_content);
         return MS_ERR_FILE_NOT_FOUND;
     }
@@ -150,6 +152,7 @@ int main(int argc, char *argv[]) {
             continue;
         }
 
+        if (idx >= STEPS_MAX_SIZE) break;
         Step *curr = &steps[idx];
 
         // left trim
@@ -166,7 +169,7 @@ int main(int argc, char *argv[]) {
         int len = end - start;
         snprintf(curr->name, sizeof(curr->name), "%.*s", len, start);
 
-        curr->parent = parents_cache[curr->level - 1];
+        curr->parent = (curr->level > 0) ? parents_cache[curr->level - 1] : NULL;
 
         if (prev) {
             // next and previous
@@ -229,6 +232,7 @@ int main(int argc, char *argv[]) {
         move_to_row(INPUT_ROW);
 
         char c = getchar();
+        if (c == EOF) { quit = 1; break; }
 
         switch (c) {
             case 'q': quit = 1; break;

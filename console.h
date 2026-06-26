@@ -1,5 +1,5 @@
-#ifndef CONSOLE
-#define CONSOLE
+#ifndef _CONSOLE
+#define _CONSOLE
 
 #define ANSI_UPPER_LEFT_CORNER    "\033[H"
 #define ANSI_CLEAR_CURRENT_ROW    "\033[2K"
@@ -15,8 +15,8 @@ void clear_screen(void);
 void clear_row(int row);
 void move_to(int row, int col);
 void move_to_row(int row);
-void print_colored(char *text, char *color);
-void print_at_row(int row, char *text);
+void print_colored(const char *text, const char *color);
+void print_at_row(int row, const char *text);
 void draw_hline(int row, int width, char ch);
 
 #endif

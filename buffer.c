@@ -48,5 +48,7 @@ bool buf_append(Buffer *buf, const char *format, ...) {
 }
 
 void buf_clean(Buffer *buf) {
+    if (!buf || !buf->data) return;
+
     memset(buf->data, 0, buf->size);
 }
