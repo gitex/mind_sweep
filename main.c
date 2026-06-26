@@ -29,6 +29,8 @@ typedef enum {
     MS_ERR_INPUT = -1,
     MS_ERR_FILE_NOT_FOUND = -2,
     MS_ERR_FILE_EMPTY = -3,
+    MS_ERR_NO_STEPS = -4,
+    MS_ERR_ALLOCATION = -5,
 } output_t;
 
 
@@ -130,11 +132,11 @@ int main(int argc, char *argv[]) {
     fclose(file);
 
     // read file content
-    Step *steps = (Step*)malloc(STEPS_MAX_SIZE * sizeof(Step));
+    Step *steps = (Step*)calloc(STEPS_MAX_SIZE, sizeof(Step));
     if (!steps) {
         printf("Cannot allocate the memory");
         free(file_content);
-        return -1;
+        return MS_ERR_ALLOCATION;
     }
 
     int idx = 0;
@@ -149,12 +151,13 @@ int main(int argc, char *argv[]) {
         if (end == NULL) {
             break;
         }
-        Step *curr = &steps[idx];
 
         if (*start != LEVEL_SIGN) {
             start = end + 1;
             continue;
         }
+
+        Step *curr = &steps[idx];
 
         // left trim
         while(*start) {
@@ -190,10 +193,18 @@ int main(int argc, char *argv[]) {
     }
 
     // last step is always leaf
-    prev->is_leaf = true;
-    leafs_count++;
+    if (prev) {
+        prev->is_leaf = true;
+        leafs_count++;
+    }
 
     free(file_content);
+
+    if (*steps->name == '\0') {
+        fprintf(stderr, "File does not contain any steps.\n");
+        free(steps);
+        return MS_ERR_NO_STEPS;
+    }
 
     // --- TUI ---
     clear_screen();
