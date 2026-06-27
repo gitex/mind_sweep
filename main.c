@@ -33,6 +33,12 @@ typedef enum {
 } output_t;
 
 
+struct command {
+    const char *name;
+    const char *description;
+};
+
+
 typedef struct Step {
     char name[64];
     int level;
@@ -42,7 +48,7 @@ typedef struct Step {
 } Step;
 
 
-Step *find_next_step(Step *steps, Step *current) {
+static Step *find_next_step(Step *steps, Step *current) {
     if (!steps) return NULL;
 
     Step *curr = current;
@@ -68,7 +74,8 @@ Step *find_next_step(Step *steps, Step *current) {
     return NULL;
 }
 
-void write_progress(Buffer *buf, int current, int total) {
+
+static void write_progress(Buffer *buf, int current, int total) {
     int percent = current * 100 / total;
 
     buf_append(buf, "progress: [");
@@ -84,7 +91,7 @@ void write_progress(Buffer *buf, int current, int total) {
     buf_append(buf, "] %d/%d", current, total);
 }
 
-void write_step(Buffer *buf, Step *step) {
+static void write_step(Buffer *buf, Step *step) {
     if (step == NULL) {
         return;
     }
@@ -205,7 +212,7 @@ int main(int argc, char *argv[]) {
     clear_screen();
     int quit = 0;
 
-    char *commands[3][2] = {
+    struct command commands[] = {
         {"n", "next"},
         {"r", "restart"},
         {"q", "exit"},
@@ -220,8 +227,8 @@ int main(int argc, char *argv[]) {
     while(!quit) {
         print_at_row(CONSOLE_HELP_LINE, "help: ");
         for (int i = 0; (size_t)i < commands_size; i++) {
-            print_colored(commands[i][0], ANSI_COLOR_RED);
-            printf(" - %s", commands[i][1]);
+            print_colored(commands[i].name, ANSI_COLOR_RED);
+            printf(" - %s", commands[i].description);
             if ((size_t)i != commands_size - 1) { printf(", "); }
         }
 
