@@ -133,7 +133,7 @@ int main(int argc, char *argv[]) {
     fclose(file);
 
     // read file content
-    Step *steps = (Step*)calloc(STEPS_MAX_SIZE, sizeof(Step));
+    Step *steps = calloc(STEPS_MAX_SIZE, sizeof(Step));
     if (!steps) {
         fprintf(stderr, "Cannot allocate the memory\n");
         free(file_content);

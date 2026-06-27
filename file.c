@@ -30,7 +30,7 @@ long file_size(FILE *file) {
 char *file_read_into_memory(FILE *file) {
     int size = file_size(file);
 
-    char *buf = (char*)malloc(size + 1);
+    char *buf = malloc(size + 1);
     if (!buf) {
         fprintf(stderr, "Cannot allocate memory\n");
         return NULL;
