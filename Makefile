@@ -1,25 +1,33 @@
-build: exe
+all: clean dev
 
-.PHONY: build exe debug clean gdb valgrind
+.PHONY: all build run debug clean gdb valgrind
 
-CC = cc
-CFILES = console.c file.c buffer.c main.c
-HFILES = console.h file.h buffer.h
-OUT_FILE = main
-CFLAGS = -Wall -Wextra -Wpedantic
+CC = gcc
+CC_FLAGS = -Wall -Wextra -Wpedantic -fmudflap
 
-exe: $(CFILES) $(HFILES)
-	$(CC) $(CFLAGS) $(CFILES) -o $(OUT_FILE)
+C_FILES = console.c file.c buffer.c main.c
+H_FILES = console.h file.h buffer.h
 
-debug: $(CFILES) $(HFILES)
-	$(CC) -g -O0 $(CFLAGS) $(CFILES) -o $(OUT_FILE)
+TARGET = main
+
+dev: $(C_FILES) $(H_FILES)
+	$(CC) -O0 -g1 $(CC_FLAGS) $(C_FILES) -o $(TARGET)
+
+release: $(C_FILES) $(H_FILES)
+	$(CC) -O2 $(CC_FLAGS) $(C_FILES) -o $(TARGET)
+
+debug: $(C_FILES) $(H_FILES)
+	$(CC) -O0 -g3 -DDEBUG -fsanitize=address,undefined $(CC_FLAGS) $(C_FILES) -o $(TARGET)
+
+run:
+	./$(TARGET)
 
 clean:
-	-rm $(OUT_FILE) 2>/dev/null
+	-rm $(TARGET) 2>/dev/null
 
 gdb: main.c debug
-	gdb ./$(OUT_FILE)
+	gdb ./$(TARGET)
 
 valgrind: main.c debug
-	valgrind --leak-check=full ./$(OUT_FILE)
+	valgrind --leak-check=full ./$(TARGET)
 
