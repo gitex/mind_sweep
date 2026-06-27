@@ -219,7 +219,7 @@ int main(int argc, char *argv[]) {
 
     while(!quit) {
         print_at_row(CONSOLE_HELP_LINE, "help: ");
-        for (int i = 0; i < commands_size; i++) {
+        for (int i = 0; (size_t)i < commands_size; i++) {
             print_colored(commands[i][0], ANSI_COLOR_RED);
             printf(" - %s", commands[i][1]);
             if ((size_t)i != commands_size - 1) { printf(", "); }

@@ -3,7 +3,7 @@ all: clean dev
 .PHONY: all build run debug clean gdb valgrind
 
 CC = gcc
-CC_FLAGS = -Wall -Wextra -Wpedantic -fmudflap
+CC_FLAGS = -Wall -Wextra -Wpedantic
 
 C_FILES = console.c file.c buffer.c main.c
 H_FILES = console.h file.h buffer.h
