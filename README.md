@@ -43,7 +43,7 @@ sudo pacman -S gcc make
 Билд:
 
 ```bash
-make
+make release
 ./main steps.md
 ```
 
